@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "processing.fullname" . }}-paperless
+  annotations:
+    {{- include "processing.annotations" . | nindent 4 }}
+    {{- if .Values.processing.service }}
+    {{- with .Values.processing.service.annotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- end }}
+  labels:
+    {{- include "processing.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "paperless"
+spec:
+  type: {{ .Values.processing.service.type | default "ClusterIP" }}
+  {{- with .Values.processing.service.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- if eq (.Values.processing.service.type | default "ClusterIP") "LoadBalancer" -}}
+  {{- with .Values.processing.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- with .Values.processing.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ . | toYaml | nindent 2 }}
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "processing.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: "paperless"
+  ports:
+  - name: http
+    port: {{ .Values.processing.service.port }}
+    targetPort: http
+    {{- if has (.Values.processing.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") -}}
+    {{- with .Values.processing.service.nodePort }}
+    nodePort: {{ . }}
+    {{- end }}
+    {{- end }}
+  {{- if has (.Values.processing.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") }}
+  {{- with .Values.processing.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- with .Values.processing.service.externalIPs }}
+  externalIPs: {{ . | toYaml | nindent 2 }}
+  {{- end }}

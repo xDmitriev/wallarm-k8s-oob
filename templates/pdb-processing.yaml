@@ -1,0 +1,26 @@
+{{- if .Values.config.gotenberg_tika.enabled }}
+{{- if .Values.gotenberg.podDisruptionBudget }}
+{{- if .Values.gotenberg.podDisruptionBudget.enabled }}
+apiVersion: {{ template "podDisruptionBudget.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "processing.fullname" . }}-gotenberg
+  annotations:
+    {{- include "processing.annotations" . | nindent 4 }}
+  labels:
+    {{- include "processing.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "processing"
+spec:
+  selector:
+    matchLabels:
+      {{- include "processing.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: "gotenberg"
+  {{- with .Values.gotenberg.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  {{- with .Values.gotenberg.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

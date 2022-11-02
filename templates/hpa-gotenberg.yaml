@@ -1,0 +1,44 @@
+{{- if .Values.config.gotenberg_tika.enabled }}
+{{- if .Values.gotenberg.autoscaling.enabled }}
+apiVersion: {{ template "horizontalPodAutoscaler.apiVersion" . }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "processing.fullname" . }}-gotenberg
+  annotations:
+    {{- include "processing.annotations" . | nindent 4 }}
+  labels:
+    {{- include "processing.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "gotenberg"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "processing.fullname" . }}-gotenberg
+  minReplicas: {{ .Values.gotenberg.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.gotenberg.autoscaling.maxReplicas }}
+  {{ if .Capabilities.APIVersions.Has "autoscaling/v2beta2/HorizontalPodAutoscaler" -}}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.gotenberg.autoscaling.targetCPUUtilizationPercentage }}
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.gotenberg.autoscaling.targetMemoryUtilizationPercentage }}
+  {{ else -}}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: {{ .Values.gotenberg.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: {{ .Values.gotenberg.autoscaling.targetMemoryUtilizationPercentage }}
+  {{ end -}}
+{{- end }}
+{{- end }}

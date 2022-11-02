@@ -1,0 +1,49 @@
+{{- if .Values.config.gotenberg_tika.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "processing.fullname" . }}-tika
+  annotations:
+    {{- include "processing.annotations" . | nindent 4 }}
+    {{- if .Values.tika.service }}
+    {{- with .Values.tika.service.annotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- end }}
+  labels:
+    {{- include "processing.labels" . | nindent 4 }}
+    app.kubernetes.io/component: "tika"
+spec:
+  type: {{ .Values.tika.service.type | default "ClusterIP" }}
+  {{- with .Values.tika.service.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- if eq (.Values.tika.service.type | default "ClusterIP") "LoadBalancer" -}}
+  {{- with .Values.tika.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- with .Values.tika.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ . | toYaml | nindent 2 }}
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "processing.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: "tika"
+  ports:
+  - name: http
+    port: {{ .Values.tika.service.port }}
+    targetPort: http
+    {{- if has (.Values.tika.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") -}}
+    {{- with .Values.tika.service.nodePort }}
+    nodePort: {{ . }}
+    {{- end }}
+    {{- end }}
+  {{- if has (.Values.tika.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") }}
+  {{- with .Values.tika.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- with .Values.tika.service.externalIPs }}
+  externalIPs: {{ . | toYaml | nindent 2 }}
+  {{- end }}
+{{- end }}

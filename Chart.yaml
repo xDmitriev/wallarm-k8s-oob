@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Paperless NGX Deployment
+name: paperless
+version: 0.9.1
