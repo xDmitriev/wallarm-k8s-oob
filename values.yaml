@@ -1,9 +1,24 @@
 nameOverride: ""
 
 config:
+  ### Wallarm API configuration
+  ###
   api:
-    token:
-    host:
+    ### Token to authorize in the Wallarm Cloud. Required.
+    ###
+    token: ""
+    ### Address of Wallarm API service
+    ###
+    host: api.wallarm.com
+    ### Port of Wallarm API service
+    ###
+    port: 443
+    ### Use SSL to connect to Wallarm API service: `true` or `false`
+    ###
+    useSSL: true
+    ### Verify CA during connecting to Wallarm API service: `true` or `false`
+    ###
+    caVerify: true
 
   mirroring:
     daemonSet:
@@ -243,35 +258,23 @@ processing:
     maxUnavailable: 1
     # minAvailable: 1
 
-  ## Persistent Volume Claim settings
-  ## https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+  ## Autoscaling
+  ## https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
   ##
-  persistentVolumeClaim:
-    create: true
+  autoscaling:
+    enabled: false
 
-    ### You can use existing volume, define here its the name. Valid
-    ### only for `create: false`
-    ###
-    useExisting: ""
+    ## Scaling thresholds, min and max
+    ##
+    minReplicas: 1
+    maxReplicas: 3
 
-    ### Choose the size of PVC. Usually can be expanded (but it is
-    ### CSI driver or storage class controller responsibility; means
-    ### may not supported).
-    ###
-    size: 50Gi
+    ## Target average values of the metric across all relevant pods, represented
+    ## as a percentage of the requested value of the resource for the pods.
+    ##
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 85
 
-    ### Strageclass name for dynamic provisioning
-    ###
-    storageClass: ""
-
-    ### Persistent volume selector in case of static provisioning
-    ###
-    selector: {}
-
-    ### VolumeName is the binding reference to the PersistentVolume
-    ### backing this claim, for static provisioning
-    ###
-    volumeName: ""
 
 ## Aggregation module deployment configuration.
 aggregation:
@@ -406,37 +409,6 @@ aggregation:
     # failureThreshold: 3
     # successThreshold: 1
 
-  ## Additional containers for this pods
-  ##
-  extraContainers: []
-  # - name: some-container
-  #   image: some/image:latest
-  #   env:
-  #   - name: FOO
-  #     value: "123"
-  #   volumeMounts:
-  #   - name: bar-volume
-  #     mountPath: /mnt
-
-  ## Additional init containers
-  ##
-  extraInitContainers: []
-  # - name: init
-  #   image: busybox
-  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
-
-  ## Additional volumes that should be mounted to the main container
-  ##
-  extraVolumeMounts: []
-  # - name: something
-  #   mountPath: /mnt/something
-
-  ## Volumes that should attached to pods
-  ##
-  extraVolumes: []
-  # - name: something
-  #   emptyDir: {}
-
   service:
     ## Service type
     ## https://kubernetes.io/docs/concepts/services-networking/service/
@@ -510,142 +482,6 @@ aggregation:
     targetCPUUtilizationPercentage: 60
     targetMemoryUtilizationPercentage: 85
 
-## Gotenberg deployment configuration. Doesn't make sence in
-## case of ``.config.gotenberg_tika.enabled = false`
-##
-tika:
-  image:
-    registry: "ghcr.io"
-    name: "paperless-ngx/tika"
-    tag: "latest"
-    pullPolicy: IfNotPresent
-
-  ## Number of deployment replicas. Perhaps it's stateful, so
-  ## more than single replica may not work.
-  ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
-  ##
-  replicaCount: 1
-
-  ## Settings for automated rolling updates
-  ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
-  ##
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0%
-
-  ## Labels to add to the pods
-  ##
-  podLabels: {}
-  # key: value
-
-  ## Annotations to add to the pods
-  ##
-  podAnnotations: {}
-  # key: value
-
-  ## Additional arguments to pass to the tika container
-  ##
-  extraArgs: []
-
-  ## Additional environment variables to pass to the tika container
-  ##
-  extraEnvs: []
-  # - name: FOO
-  #   value: FOO
-  # - name: BAR
-  #   valueFrom:
-  #     secretKeyRef:
-  #       key: BAR
-  #       name: bar-secret
-
-  ## Setting to allow this Pod to schedule onto nodes with matching taints
-  ## https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  ##
-  tolerations: []
-  # - key: "key"
-  #   operator: "Equal|Exists"
-  #   value: "value"
-  #   effect: "NoSchedule|PreferNoSchedule"
-
-  ## Affinity and anti-affinity settings of this Pod
-  ## https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ##
-  ## Prefered podAntiAffinity will be applied if no one affinity configured
-  ##
-  affinity: {}
-  # podAntiAffinity:
-  #   preferredDuringSchedulingIgnoredDuringExecution:
-  #   - weight: 100
-  #     podAffinityTerm:
-  #       labelSelector:
-  #         matchExpressions:
-  #         - key: component
-  #           operator: In
-  #           values:
-  #           - mtls-router
-  #         - key: app
-  #           operator: In
-  #           values:
-  #           - mtls-router
-  #       topologyKey: kubernetes.io/hostname
-
-  ## Node selector (node labels) for pods
-  ## https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-
-  ## Lifecycle hooks
-  ## https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
-  ##
-  lifecycle: {}
-
-  ## Grace period for the pods termination in seconds
-  ##
-  terminationGracePeriodSeconds: 30
-
-  ## PriorityClass name to apply to the pods
-  ## This setting indicates the importance of the pod relative to other pods
-  ## https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
-  ##
-  priorityClassName: ""
-
-  ## Privilegues and access controls for the the container
-  ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
-  ##
-  securityContext: {}
-
-  ## The number of resources required for the main container
-  ## https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-  ##
-  resources: {}
-  # requests:
-  #   memory: 1Gi
-  #   cpu: 500m
-  # limits:
-  #   memory: 4Gi
-  #   cpu: 2000m
-
-  livenessProbe: {}
-    # exec:
-    #   command: [ "/usr/bin/env", "bash", "/opt/liveness.sh" ]
-    # initialDelaySeconds: 60
-    # timeoutSeconds: 3
-    # periodSeconds: 15
-    # failureThreshold: 3
-    # successThreshold: 1
-
-  readinessProbe: {}
-    # exec:
-    #   command: [ "/usr/bin/env", "bash", "/opt/readiness.sh" ]
-    # initialDelaySeconds: 60
-    # timeoutSeconds: 3
-    # periodSeconds: 15
-    # failureThreshold: 3
-    # successThreshold: 1
-
   ## Additional containers for this pods
   ##
   extraContainers: []
@@ -671,67 +507,14 @@ tika:
   # - name: something
   #   mountPath: /mnt/something
 
-  ## Volumes that should attached to pods
+  ## Volumes that should be attached to pods
   ##
   extraVolumes: []
   # - name: something
   #   emptyDir: {}
 
-  service:
-    ## Service type
-    ## https://kubernetes.io/docs/concepts/services-networking/service/
-    ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#service-v1-core
-    ##
-    type: ClusterIP
-
-    ## Service port
-    ##
-    port: 9998
-
-    ## Service node port (if the service type if "NodePort")
-    ##
-    nodePort: 0
-
-    ## Load balancer IP address
-    ## https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
-    ##
-    loadBalancerIP: ""
-
-    ## Load balancer source ranges. Helpful for EKS/GKE/AKE
-    ## https://kubernetes.io/docs/concepts/services-networking/service/#aws-nlb-support
-    ##
-    loadBalancerSourceRanges: []
-    # - "192.168.0.0/16"
-    # - "10.0.0.0/8"
-    # - "172.16.0.0/12"
-
-    ## Kubernetes external traffic policy
-    ## https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
-    ##
-    externalTrafficPolicy: ""
-
-    ## Annotations for this Service
-    ##
-    annotations: {}
-
-    ## IP address of this Service cluster
-    ##
-    clusterIP: ""
-
-    ## ExternalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic
-    ## for this service. These IPs are not managed by Kubernetes.
-    ##
-    externalIPs: []
-
-  ## Pod Disturion Budget settings
-  ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
-  ##
-  podDisruptionBudget:
-    enabled: true
-
-    ### Select only one of these:
-    maxUnavailable: 1
-    # minAvailable: 1
+  extraLabels: {}
+  extraAnnotations: {}
 
 ## Service Account for this Pod
 ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/

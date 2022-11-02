@@ -1,12 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "processing.fullname" . }}-paperless
+  name: {{ template "processing.fullname" . }}
   annotations:
-    {{- include "processing.annotations" . | nindent 4 }}
+    {{- include "wallarm-oob.annotations" . | nindent 4 }}
+    {{- with .Values.processing.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
   labels:
     {{- include "processing.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "paperless"
+    {{- with .Values.processing.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.processing.replicaCount }}
   {{- with .Values.processing.updateStrategy }}
@@ -15,22 +20,30 @@ spec:
   selector:
     matchLabels:
       {{- include "processing.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: "paperless"
   template:
     metadata:
       annotations:
-        {{- include "processing.annotations" . | nindent 8 }}
+        {{- include "wallarm-oob.annotations" . | nindent 8 }}
         {{- with .Values.processing.podAnnotations }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
+        {{- with .Values.processing.extraAnnotations }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
       labels:
-        {{- include "processing.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: "paperless"
+        {{- include "processing.labels" . | nindent 8 }}
         {{- with .Values.processing.podLabels }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
+        {{- with .Values.processing.extraLabels }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
     spec:
-      serviceAccountName: {{ include "processing.serviceAccountName" . }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "common.serviceAccountName" . }}
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
       terminationGracePeriodSeconds: {{ .Values.processing.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.processing.nodeSelector }}
       nodeSelector: {{ . | toYaml | nindent 8 }}
@@ -51,19 +64,17 @@ spec:
       initContainers: {{ . | toYaml | nindent 8 }}
       {{- end }}
       containers:
-      - name: paperless
-        image: {{ include "processing.image" .Values.processing.image }}
+      - name: processing
+        image: {{ include "image" .Values.processing.image }}
         imagePullPolicy: {{ .Values.processing.image.pullPolicy }}
         env:
-        {{- include "processing.envs.paperless" . | nindent 8 }}
-        {{- include "processing.envs.postgres" . | nindent 8 }}
-        {{- include "processing.envs.redis" . | nindent 8 }}
         {{- with .Values.processing.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
         ports:
           - name: http
-            containerPort: 8000
+            containerPort: 8080
+            protocol: TCP
         {{- with .Values.processing.livenessProbe }}
         livenessProbe: {{ . | toYaml | nindent 10 }}
         {{- end }}
@@ -92,18 +103,6 @@ spec:
         resources: {{ . | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
-        - name: data
-          mountPath: /usr/src/paperless/data
-          subPath: data
-        - name: data
-          mountPath: /usr/src/paperless/media
-          subPath: media
-        - name: data
-          mountPath: /usr/src/paperless/export
-          subPath: export
-        - name: data
-          mountPath: /usr/src/paperless/consume
-          subPath: consume
         {{- with .Values.processing.extraVolumeMounts }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -111,13 +110,6 @@ spec:
       {{- . | toYaml | nindent 6 }}
       {{- end }}
       volumes:
-      - name: data
-        persistentVolumeClaim:
-      {{- if .Values.processing.persistentVolumeClaim.create }}
-          claimName: {{ include "processing.fullname" . }}-paperless
-      {{- else }}
-          claimName: {{ .Values.processing.persistentVolumeClaim.useExisting }}
-      {{- end }}
       {{- with .Values.processing.extraVolumes }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}

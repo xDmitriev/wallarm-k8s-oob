@@ -31,7 +31,7 @@ spec:
         {{- . | toYaml | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ include "processing.serviceAccountName" . }}
+      serviceAccountName: {{ include "common.serviceAccountName" . }}
       terminationGracePeriodSeconds: {{ .Values.gotenberg.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.gotenberg.nodeSelector }}
       nodeSelector: {{ . | toYaml | nindent 8 }}
