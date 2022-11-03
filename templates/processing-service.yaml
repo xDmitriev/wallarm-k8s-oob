@@ -12,9 +12,6 @@ metadata:
     {{- end }}
   labels:
     {{- include "processing.labels" . | nindent 4 }}
-    {{- with .Values.processing.extraLabels }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
 spec:
   type: {{ .Values.processing.service.type | default "ClusterIP" }}
   {{- with .Values.processing.service.clusterIP }}

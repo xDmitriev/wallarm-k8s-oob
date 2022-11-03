@@ -2,16 +2,16 @@
 apiVersion: {{ template "horizontalPodAutoscaler.apiVersion" . }}
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ template "processing.fullname" . }}-processing
+  name: {{ template "aggregation.fullname" . }}
   annotations:
-    {{- include "wallarm-oob.annotations" . | nindent 4 }}
+    {{- include "aggregation.annotations" . | nindent 4 }}
   labels:
     {{- include "aggregation.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ template "processing.fullname" . }}-aggregation
+    name: {{ template "aggregation.fullname" . }}
   minReplicas: {{ .Values.aggregation.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.aggregation.autoscaling.maxReplicas }}
   {{ if .Capabilities.APIVersions.Has "autoscaling/v2beta2/HorizontalPodAutoscaler" -}}

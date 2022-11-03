@@ -128,7 +128,7 @@ processing:
   ##
   priorityClassName: ""
 
-  ## Privilegues and access controls for the the container
+  ## Privileges and access controls for the the container
   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
   ##
@@ -170,37 +170,6 @@ processing:
     timeoutSeconds: 3
     failureThreshold: 3
     successThreshold: 1
-
-  ## Additional containers for this pods
-  ##
-  extraContainers: []
-  # - name: some-container
-  #   image: some/image:latest
-  #   env:
-  #   - name: FOO
-  #     value: "123"
-  #   volumeMounts:
-  #   - name: bar-volume
-  #     mountPath: /mnt
-
-  ## Additional init containers
-  ##
-  extraInitContainers: []
-  # - name: init
-  #   image: busybox
-  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
-
-  ## Additional volumes that should be mounted to the main container
-  ##
-  extraVolumeMounts: []
-  # - name: something
-  #   mountPath: /mnt/something
-
-  ## Volumes that should attached to pods
-  ##
-  extraVolumes: []
-  # - name: something
-  #   emptyDir: {}
 
   service:
     ## Service type
@@ -248,6 +217,21 @@ processing:
     ##
     externalIPs: []
 
+  ## Service Account for this Pod
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  ##
+  serviceAccount:
+    create: false
+
+    ## Name of the ServiceAccount. If creating not required then
+    ## this name must be a name of existing ServiceAccount object
+    ##
+    name: ""
+
+    ## Annotations for the created Service Account
+    ##
+    annotations: {}
+
   ## Pod Disturion Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
@@ -275,6 +259,39 @@ processing:
     targetCPUUtilizationPercentage: 60
     targetMemoryUtilizationPercentage: 85
 
+  ## Additional containers for this pods
+  ##
+  extraContainers: []
+  # - name: some-container
+  #   image: some/image:latest
+  #   env:
+  #   - name: FOO
+  #     value: "123"
+  #   volumeMounts:
+  #   - name: bar-volume
+  #     mountPath: /mnt
+
+  ## Additional init containers
+  ##
+  extraInitContainers: []
+  # - name: init
+  #   image: busybox
+  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
+
+  ## Additional volumes that should be mounted to the main container
+  ##
+  extraVolumeMounts: []
+  # - name: something
+  #   mountPath: /mnt/something
+
+  ## Volumes that should be attached to pods
+  ##
+  extraVolumes: []
+  # - name: something
+  #   emptyDir: {}
+
+  extraLabels: {}
+  extraAnnotations: {}
 
 ## Aggregation module deployment configuration.
 aggregation:
@@ -455,6 +472,21 @@ aggregation:
     ##
     externalIPs: []
 
+  ## Service Account for this Pod
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  ##
+  serviceAccount:
+    create: true
+
+    ## Name of the ServiceAccount. If creating not required then
+    ## this name must be a name of existing ServiceAccount object
+    ##
+    name: ""
+
+    ## Annotations for the created Service Account
+    ##
+    annotations: {}
+
   ## Pod Disturion Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
@@ -516,20 +548,7 @@ aggregation:
   extraLabels: {}
   extraAnnotations: {}
 
-## Service Account for this Pod
-## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-##
-serviceAccount:
-  create: true
-
-  ## Name of the ServiceAccount. If creating not required then
-  ## this name must be name of existing ServiceAccount object
-  ##
-  name: ""
-
-  ## Annotations for the created Service Account
-  ##
-  annotations: {}
-
-extraLabels: {}
-extraAnnotations: {}
+extraLabels:
+  extraLabels: extraLabels
+extraAnnotations:
+  extraAnnotations: extraAnnotations

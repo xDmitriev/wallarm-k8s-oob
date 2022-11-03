@@ -1,9 +1,8 @@
-{{- if .Values.config.processing_tika.enabled }}
 {{- if .Values.processing.autoscaling.enabled }}
 apiVersion: {{ template "horizontalPodAutoscaler.apiVersion" . }}
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ template "processing.fullname" . }}-processing
+  name: {{ template "processing.fullname" . }}
   annotations:
     {{- include "wallarm-oob.annotations" . | nindent 4 }}
   labels:
@@ -39,5 +38,4 @@ spec:
       name: memory
       targetAverageUtilization: {{ .Values.processing.autoscaling.targetMemoryUtilizationPercentage }}
   {{ end -}}
-{{- end }}
 {{- end }}

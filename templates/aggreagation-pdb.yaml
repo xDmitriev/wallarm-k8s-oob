@@ -1,26 +1,22 @@
-{{- if .Values.config.gotenberg_tika.enabled }}
-{{- if .Values.tika.podDisruptionBudget }}
-{{- if .Values.tika.podDisruptionBudget.enabled }}
+{{- if .Values.aggregation.podDisruptionBudget }}
+{{- if .Values.aggregation.podDisruptionBudget.enabled }}
 apiVersion: {{ template "podDisruptionBudget.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ template "processing.fullname" . }}-tika
+  name: {{ template "aggregation.fullname" . }}
   annotations:
-    {{- include "processing.annotations" . | nindent 4 }}
+    {{- include "aggregation.annotations" . | nindent 4 }}
   labels:
-    {{- include "processing.labels" . | nindent 4 }}
-    app.kubernetes.io/component: "tika"
+    {{- include "aggregation.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
       {{- include "processing.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: "tika"
-  {{- with .Values.tika.podDisruptionBudget.maxUnavailable }}
+  {{- with .Values.aggregation.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ . }}
   {{- end }}
-  {{- with .Values.tika.podDisruptionBudget.minAvailable }}
+  {{- with .Values.aggregation.podDisruptionBudget.minAvailable }}
   minAvailable: {{ . }}
   {{- end }}
-{{- end }}
 {{- end }}
 {{- end }}

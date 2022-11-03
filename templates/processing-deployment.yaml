@@ -3,15 +3,9 @@ kind: Deployment
 metadata:
   name: {{ template "processing.fullname" . }}
   annotations:
-    {{- include "wallarm-oob.annotations" . | nindent 4 }}
-    {{- with .Values.processing.extraAnnotations }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
+    {{- include "processing.annotations" . | nindent 4 }}
   labels:
     {{- include "processing.labels" . | nindent 4 }}
-    {{- with .Values.processing.extraLabels }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
 spec:
   replicas: {{ .Values.processing.replicaCount }}
   {{- with .Values.processing.updateStrategy }}
@@ -35,12 +29,9 @@ spec:
         {{- with .Values.processing.podLabels }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
-        {{- with .Values.processing.extraLabels }}
-        {{- . | toYaml | nindent 8 }}
-        {{- end }}
     spec:
-      {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ include "common.serviceAccountName" . }}
+      {{- if .Values.processing.serviceAccount.create }}
+      serviceAccountName: {{ template "processing.serviceAccountName" . }}
       {{- else }}
       automountServiceAccountToken: false
       {{- end }}

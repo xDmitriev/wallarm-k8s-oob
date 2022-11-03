@@ -3,18 +3,12 @@ kind: Service
 metadata:
   name: {{ template "aggregation.fullname" . }}
   annotations:
-    {{- include "wallarm-oob.annotations" . | nindent 4 }}
+    {{- include "aggregation.annotations" . | nindent 4 }}
     {{- with .Values.aggregation.service.annotations }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
-    {{- with .Values.aggregation.extraAnnotations }}
     {{- . | toYaml | nindent 4 }}
     {{- end }}
   labels:
     {{- include "aggregation.labels" . | nindent 4 }}
-    {{- with .Values.aggregation.extraLabels }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
 spec:
   type: {{ .Values.aggregation.service.type | default "ClusterIP" }}
   {{- with .Values.aggregation.service.clusterIP }}

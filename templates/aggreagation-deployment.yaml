@@ -3,15 +3,9 @@ kind: Deployment
 metadata:
   name: {{ template "aggregation.fullname" . }}
   annotations:
-    {{- include "wallarm-oob.annotations" . | nindent 4 }}
-    {{- with .Values.aggregation.extraAnnotations }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
+    {{- include "aggregation.annotations" . | nindent 4 }}
   labels:
     {{- include "aggregation.labels" . | nindent 4 }}
-    {{- with .Values.aggregation.extraLabels }}
-    {{- . | toYaml | nindent 4 }}
-    {{- end }}
 spec:
   replicas: {{ .Values.aggregation.replicaCount }}
   {{- with .Values.aggregation.updateStrategy }}
@@ -23,11 +17,8 @@ spec:
   template:
     metadata:
       annotations:
-        {{- include "wallarm-oob.annotations" . | nindent 8 }}
+        {{- include "aggregation.annotations" . | nindent 8 }}
         {{- with .Values.aggregation.podAnnotations }}
-        {{- . | toYaml | nindent 8 }}
-        {{- end }}
-        {{- with .Values.aggregation.extraAnnotations }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
       labels:
@@ -35,11 +26,12 @@ spec:
         {{- with .Values.aggregation.podLabels }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
-        {{- with .Values.aggregation.extraLabels }}
-        {{- . | toYaml | nindent 8 }}
-        {{- end }}
     spec:
-      serviceAccountName: {{ include "common.serviceAccountName" . }}
+      {{- if .Values.aggregation.serviceAccount.create }}
+      serviceAccountName: {{ include "aggregation.fullname" . }}
+      {{- else }}
+      automountServiceAccountToken: false
+      {{- end }}
       terminationGracePeriodSeconds: {{ .Values.aggregation.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.aggregation.nodeSelector }}
       nodeSelector: {{ . | toYaml | nindent 8 }}
