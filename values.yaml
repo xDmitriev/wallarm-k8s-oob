@@ -548,7 +548,5 @@ aggregation:
   extraLabels: {}
   extraAnnotations: {}
 
-extraLabels:
-  extraLabels: extraLabels
-extraAnnotations:
-  extraAnnotations: extraAnnotations
+extraLabels: {}
+extraAnnotations: {}

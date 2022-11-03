@@ -14,14 +14,23 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/*
+Create the name for Processing Unit
+*/}}
 {{- define "processing.fullname" }}
 {{- printf "%s-processing" (include "wallarm-oob.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{/*
+Create the name for Aggregation Unit
+*/}}
 {{- define "aggregation.fullname" }}
 {{- printf "%s-aggregation" (include "wallarm-oob.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{/*
+Create the name for shared secret
+*/}}
 {{- define "wallarm-oob.sharedSecretName" }}
 {{- printf "%s-credentials" (include "wallarm-oob.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
