@@ -92,12 +92,8 @@ data:
                 wallarm_status on format=json;
             }
 
-            location /-/healthcheck {
+            location /healthcheck {
                 return 200 'OK';
-            }
-
-            location /-/ping {
-                return 200 'PONG';
             }
 
             location / {

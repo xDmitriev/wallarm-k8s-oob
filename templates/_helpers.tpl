@@ -201,4 +201,5 @@ capabilities:
     - SETGID
     - AUDIT_WRITE
     - DAC_OVERRIDE
+    - NET_BIND_SERVICE
 {{- end }}
