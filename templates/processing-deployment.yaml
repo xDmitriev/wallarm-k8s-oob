@@ -17,11 +17,10 @@ spec:
   template:
     metadata:
       annotations:
-        {{- include "wallarm-oob.annotations" . | nindent 8 }}
+        checksum/config: {{ index (include (print .Template.BasePath "/processing-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/credentials: {{ index (include (print .Template.BasePath "/shared-secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        {{- include "processing.annotations" . | nindent 8 }}
         {{- with .Values.processing.podAnnotations }}
-        {{- . | toYaml | nindent 8 }}
-        {{- end }}
-        {{- with .Values.processing.extraAnnotations }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
       labels:
@@ -58,13 +57,25 @@ spec:
       - name: processing
         image: {{ include "image" .Values.processing.image }}
         imagePullPolicy: {{ .Values.processing.image.pullPolicy }}
+        args:
+          {{- with .Values.processing.extraArgs }}
+          {{ . | toYaml | nindent 10 }}
+          {{- end }}
         env:
+        - name: NGINX_EXTERNAL_CONFIG
+          value: "true"
+        - name: POSTANALYTIC_ADDRESS
+          value: {{ printf "%s.%s.svc" (include "aggregation.fullname" .) .Release.Namespace }}
+        {{- include "wallarm-oob.credentials" . | nindent 8 }}
         {{- with .Values.processing.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
         ports:
           - name: http
-            containerPort: 8080
+            containerPort: 8445
+            protocol: TCP
+          - name: metrics
+            containerPort: {{ .Values.config.processing.metricsPort }}
             protocol: TCP
         {{- with .Values.processing.livenessProbe }}
         livenessProbe: {{ . | toYaml | nindent 10 }}
@@ -76,24 +87,18 @@ spec:
         lifecycle: {{ . | toYaml | nindent 10 }}
         {{- end }}
         {{- if .Values.processing.securityContext }}
-        {{- with .Values.processing.securityContext }}
-        securityContext: {{ . | toYaml | nindent 10 }}
-        {{- end }}
+        securityContext: {{ .Values.processing.securityContext | toYaml | nindent 10 }}
         {{- else }}
-        securityContext:
-          privileged: false
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - CHOWN
-              - SETUID
-              - SETGID
+        securityContext: {{ include "wallarm-oob.nodeSecurityContext" . | nindent 10 }}
         {{- end }}
         {{- with .Values.processing.resources }}
         resources: {{ . | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
         {{- with .Values.processing.extraVolumeMounts }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -101,6 +106,9 @@ spec:
       {{- . | toYaml | nindent 6 }}
       {{- end }}
       volumes:
+        - name: nginx-config
+          configMap:
+            name: {{ template "processing.fullname" . }}
       {{- with .Values.processing.extraVolumes }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}

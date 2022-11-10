@@ -145,10 +145,14 @@ app.kubernetes.io/component: "aggregation"
 Docker image name
 */}}
 {{- define "image" -}}
+{{- if .fullname -}}
+{{- printf "%s" .fullname -}}
+{{- else -}}
 {{- if .registry -}}
 {{- printf "%s/%s:%s" .registry .name .tag -}}
 {{- else -}}
 {{- printf "%s:%s" .name .tag -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -180,3 +184,21 @@ Docker image name
       key: WALLARM_API_TOKEN
       name: {{ template "wallarm-oob.sharedSecretName" . }}
 {{- end -}}
+
+{{/*
+Node SecurityContext.
+*/}}
+{{- define "wallarm-oob.nodeSecurityContext" -}}
+runAsUser: 0
+runAsGroup: 0
+capabilities:
+  drop:
+    - ALL
+  add:
+    - CHOWN
+    - FOWNER
+    - SETUID
+    - SETGID
+    - AUDIT_WRITE
+    - DAC_OVERRIDE
+{{- end }}

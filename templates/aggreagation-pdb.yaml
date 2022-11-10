@@ -11,7 +11,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "processing.selectorLabels" . | nindent 6 }}
+      {{- include "aggregation.selectorLabels" . | nindent 6 }}
   {{- with .Values.aggregation.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ . }}
   {{- end }}

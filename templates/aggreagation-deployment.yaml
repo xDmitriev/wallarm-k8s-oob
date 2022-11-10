@@ -17,6 +17,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/credentials: {{ index (include (print .Template.BasePath "/shared-secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
         {{- include "aggregation.annotations" . | nindent 8 }}
         {{- with .Values.aggregation.podAnnotations }}
         {{- . | toYaml | nindent 8 }}
@@ -58,11 +59,14 @@ spec:
         args:
           {{- with .Values.aggregation.extraArgs }}
           {{ . | toYaml | nindent 10 }}
-          {{- end -}}
-        {{- with .Values.aggregation.extraEnvs }}
+          {{- end }}
         env:
-          - name: POSTANALYTIC_ONLY
-            value: "true"
+        - name: POSTANALYTIC_ONLY
+          value: "true"
+        - name: SLAB_ALLOC_ARENA
+          value: {{ .Values.config.aggregation.tarantoolMemory | quote }}
+        {{- include "wallarm-oob.credentials" . | nindent 8 }}
+        {{- with .Values.aggregation.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
         ports:
@@ -79,17 +83,9 @@ spec:
         lifecycle: {{ . | toYaml | nindent 10 }}
         {{- end }}
         {{- if .Values.aggregation.securityContext }}
-        {{- with .Values.aggregation.securityContext }}
-        securityContext: {{ . | toYaml | nindent 10 }}
-        {{- end }}
+        securityContext: {{ .Values.aggregation.securityContext | toYaml | nindent 10 }}
         {{- else }}
-        securityContext:
-          privileged: false
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - NET_RAW
+        securityContext: {{ include "wallarm-oob.nodeSecurityContext" . | nindent 10 }}
         {{- end }}
         {{- with .Values.aggregation.resources }}
         resources: {{ . | toYaml | nindent 10 }}

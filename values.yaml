@@ -20,11 +20,41 @@ config:
     ###
     caVerify: true
 
-  mirroring:
-    daemonSet:
+  ### Processing unit configuration
+  ###
+  processing:
+    ### Nginx directive 'real_ip_header' http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_header
+    ###
+    realIpHeader: X-Forwarded-For
+
+    ### Nginx directive 'set_real_ip_from' http://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from
+    ###
+    setRealIpFrom:
+      - 10.0.0.0/8
+      - 192.168.0.0/16
+      - 172.16.0.0/12
+      - 127.0.0.0/8
+      - fd00::/8
+
+    ### Port for Wallarm metrics and health check endpoints
+    ###
+    metricsPort: 9445
+
+  ### Aggregation unit configuration
+  ###
+  aggregation:
+    ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
+    ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
+    ###
+    tarantoolMemory: 0.5
+
+  ### Agents configuration
+  ###
+  agent:
+    ebpf:
       enabled: true
     vxlan:
-      enabled: true
+      enabled: false
 
 ## Array of private container registry credentials
 ## https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -35,6 +65,8 @@ config:
 imagePullSecrets: []
 # - name: secretName
 
+## Processing unit deployment configuration
+##
 processing:
   image:
     registry: "docker.io"
@@ -66,7 +98,11 @@ processing:
   podAnnotations: {}
   # key: value
 
-  ## Additional environment variables to pass to the paperless container
+  ## Additional arguments to pass to the container
+  ##
+  extraArgs: []
+
+  ## Additional environment variables to pass to the container
   ##
   extraEnvs: []
   # - name: FOO
@@ -145,27 +181,21 @@ processing:
   #   memory: 1Gi
   #   cpu: 1000m
 
-  livenessProbe: {}
-    # httpGet:
-    #   path: /accounts/login/
-    #   port: http
-    #   httpHeaders:
-    #     - name: Host
-    #       value: localhost
-    # initialDelaySeconds: 150
-    # periodSeconds: 15
-    # timeoutSeconds: 3
-    # failureThreshold: 3
-    # successThreshold: 1
+  livenessProbe:
+    httpGet:
+      path: /healthcheck
+      port: metrics
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
 
   readinessProbe:
     httpGet:
-      path: /accounts/login/
-      port: http
-      httpHeaders:
-        - name: Host
-          value: localhost
-    initialDelaySeconds: 90
+      path: /healthcheck
+      port: metrics
+    initialDelaySeconds: 30
     periodSeconds: 15
     timeoutSeconds: 3
     failureThreshold: 3
@@ -232,7 +262,7 @@ processing:
     ##
     annotations: {}
 
-  ## Pod Disturion Budget settings
+  ## Pod Disruption Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   podDisruptionBudget:
@@ -293,7 +323,8 @@ processing:
   extraLabels: {}
   extraAnnotations: {}
 
-## Aggregation module deployment configuration.
+## Aggregation unit deployment configuration
+##
 aggregation:
   image:
     registry: "docker.io"
@@ -325,11 +356,11 @@ aggregation:
   podAnnotations: {}
   # key: value
 
-  ## Additional arguments to pass to the gotenberg container
+  ## Additional arguments to pass to the container
   ##
   extraArgs: []
 
-  ## Additional environment variables to pass to the gotenberg container
+  ## Additional environment variables to pass to the container
   ##
   extraEnvs: []
   # - name: FOO
@@ -408,23 +439,23 @@ aggregation:
   #   memory: 512Mi
   #   cpu: 500m
 
-  livenessProbe: {}
-    # exec:
-    #   command: [ "/usr/bin/env", "bash", "/opt/liveness.sh" ]
-    # initialDelaySeconds: 60
-    # timeoutSeconds: 3
-    # periodSeconds: 15
-    # failureThreshold: 3
-    # successThreshold: 1
+  livenessProbe:
+    tcpSocket:
+      port: 3313
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
 
-  readinessProbe: {}
-    # exec:
-    #   command: [ "/usr/bin/env", "bash", "/opt/readiness.sh" ]
-    # initialDelaySeconds: 60
-    # timeoutSeconds: 3
-    # periodSeconds: 15
-    # failureThreshold: 3
-    # successThreshold: 1
+  readinessProbe:
+    tcpSocket:
+      port: 3313
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
 
   service:
     ## Service type
@@ -476,7 +507,7 @@ aggregation:
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
   serviceAccount:
-    create: true
+    create: false
 
     ## Name of the ServiceAccount. If creating not required then
     ## this name must be a name of existing ServiceAccount object
@@ -487,7 +518,7 @@ aggregation:
     ##
     annotations: {}
 
-  ## Pod Disturion Budget settings
+  ## Pod Disruption Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   podDisruptionBudget:
@@ -547,6 +578,19 @@ aggregation:
 
   extraLabels: {}
   extraAnnotations: {}
+
+## DaemonSet Agent unit deployment configuration
+##
+daemonSetAgent:
+
+## vxlan Agent unit deployment configuration
+##
+vxlanAgent:
+  suricata:
+    image:
+
+  socketProxy:
+    image:
 
 extraLabels: {}
 extraAnnotations: {}
