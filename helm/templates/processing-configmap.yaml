@@ -10,14 +10,21 @@ metadata:
   labels:
     {{- include "processing.labels" . | nindent 4 }}
 data:
+  crontab: |
+    ### Processing service crontab
+    ###
+    {{- range $k, $v := .Values.processing.cron.config }}
+    # {{ $k }}
+    {{ $v.schedule }} timeout {{ $v.timeout }} {{ $v.command }}
+    {{- end }}
+
   nginx.conf: |-
-    user www-data;
     worker_processes auto;
 
     pid /run/nginx.pid;
 
-    # Load standard modules
-    include /etc/nginx/modules-enabled/*.conf;
+    load_module /etc/nginx/modules/ngx_http_wallarm_module.so;
+    load_module /etc/nginx/modules/ngx_http_echo_module.so;
 
     events {
         worker_connections 4096;
@@ -78,7 +85,7 @@ data:
             wallarm_mode off;
             disable_acl "on";
 
-            root /var/www/html;
+            #root /var/www/html;
 
             keepalive_timeout 0;
             gzip off;
@@ -121,11 +128,11 @@ data:
 
         # Wallarm primary endpoint which receives traffic to analyze
         server {
-            listen 0.0.0.0:8445 default_server;
-            listen [::]:8445 default_server;
+            listen 0.0.0.0:{{ .Values.config.processing.httpPort }} default_server;
+            listen [::]:{{ .Values.config.processing.httpPort }} default_server;
 
             server_name _;
-            root /var/www/html;
+    #         root /var/www/html;
 
             wallarm_mode off;
 

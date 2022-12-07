@@ -2,25 +2,71 @@
 
 -include .env
 
+DIR = $(shell cd "$$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+KUBE_CLUSTER ?= oob-dev
+KUBE_VERSION ?= "v1.25.2"
+KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KUBE_CLUSTER}"
+
+KUBECTL_CMD  := KUBECONFIG=$(KUBE_CONFIG) kubectl
+HELM_CMD     := KUBECONFIG=$(KUBE_CONFIG) helm
+
+all: env-up helm-install helm-test
+.PHONY: all
+
+env-up:
+	kind create cluster \
+			--name ${KUBE_CLUSTER} \
+			--image "kindest/node:${KUBE_VERSION}" \
+			--kubeconfig ${KUBE_CONFIG} \
+			--retain
+	$(KUBECTL_CMD) apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
+	$(KUBECTL_CMD) patch -n kube-system deployment metrics-server --type=json \
+       -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+	$(KUBECTL_CMD) get nodes -o wide
+
+env-down:
+	@kind delete cluster --name ${KUBE_CLUSTER}
+
+.PHONY: env-*
+
 ### Helm routines
 ###
-HELM_ARGS := --set "config.api.token=$(WALLARM_API_TOKEN)" \
-			--set "config.api.host=$(WALLARM_API_HOST)" \
-			--set "config.api.caVerify=$(WALLARM_API_CA_VERIFY)"
+HELM_EXTRA_ARGS +=
+HELM_TEST_IMAGE += "quay.io/dmitriev/chart-testing:latest-amd64"
+HELM_ARGS := --set "config.api.token=${WALLARM_API_TOKEN}" \
+			 --set "config.api.host=${WALLARM_API_HOST}" \
+			 --set "config.api.caVerify=${WALLARM_API_CA_VERIFY:-True}" \
+			 $(HELM_EXTRA_ARGS)
 
-ifdef WALLARM_NODE_IMAGE
-HELM_ARGS += \
-			--set "aggregation.image.fullname=$(WALLARM_NODE_IMAGE)" \
-			--set "processing.image.fullname=$(WALLARM_NODE_IMAGE)"
-endif
+#ifdef WALLARM_NODE_IMAGE
+#HELM_ARGS += --set "aggregation.image.fullname=$(WALLARM_NODE_IMAGE)" \
+#			 --set "processing.image.fullname=$(WALLARM_NODE_IMAGE)"
+#endif
 
 helm-template:
-	helm template wallarm-oob . -f values.yaml $(HELM_ARGS) --debug
+	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
 
 helm-install:
-	helm upgrade --install wallarm-oob . -f values.yaml $(HELM_ARGS) --debug
+	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --debug
 
 helm-uninstall:
-	helm uninstall wallarm-oob
+	$(HELM_CMD) uninstall wallarm-oob
+
+helm-test:
+	@docker run \
+        --rm \
+        --interactive \
+        --network host \
+        --name chart-testing \
+        --volume ${KUBE_CONFIG}:/root/.kube/config \
+        --volume ${DIR}:/workdir \
+        --workdir /workdir \
+        ${HELM_TEST_IMAGE} ct install \
+            --charts helm \
+            --helm-extra-set-args "${HELM_ARGS}" \
+            --helm-extra-args "--timeout 90s" \
+            ${CT_EXTRA_ARGS:-} \
+            --debug
 
 .PHONY: helm-*

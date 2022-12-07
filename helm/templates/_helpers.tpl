@@ -183,23 +183,39 @@ Docker image name
     secretKeyRef:
       key: WALLARM_API_TOKEN
       name: {{ template "wallarm-oob.sharedSecretName" . }}
+- name: WALLARM_NODE_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.name
+- name: WALLARM_SYNCNODE_OWNER
+  value: www-data
+- name: WALLARM_SYNCNODE_GROUP
+  value: www-data
 {{- end -}}
 
+
 {{/*
-Node SecurityContext.
+Default SecurityContext
 */}}
-{{- define "wallarm-oob.nodeSecurityContext" -}}
-runAsUser: 0
-runAsGroup: 0
+{{- define "wallarm-oob.defaultSecurityContext"}}
+privileged: false
+runAsUser: 101
+allowPrivilegeEscalation: false
+capabilities:
+  drop:
+  - ALL
+{{- end }}
+
+{{/*
+Node SecurityContext
+*/}}
+{{- define "wallarm-oob.serviceSecurityContext" -}}
+privileged: false
+runAsUser: 101
+allowPrivilegeEscalation: false
 capabilities:
   drop:
     - ALL
   add:
-    - CHOWN
-    - FOWNER
-    - SETUID
-    - SETGID
-    - AUDIT_WRITE
-    - DAC_OVERRIDE
     - NET_BIND_SERVICE
 {{- end }}
