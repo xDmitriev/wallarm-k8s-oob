@@ -173,11 +173,6 @@ Docker image name
     secretKeyRef:
       key: WALLARM_API_USE_SSL
       name: {{ template "wallarm-oob.sharedSecretName" . }}
-- name: WALLARM_API_CA_VERIFY
-  valueFrom:
-    secretKeyRef:
-      key: WALLARM_API_CA_VERIFY
-      name: {{ template "wallarm-oob.sharedSecretName" . }}
 - name: WALLARM_API_TOKEN
   valueFrom:
     secretKeyRef:

@@ -11,7 +11,7 @@ KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KUBE_CLUSTER}"
 KUBECTL_CMD  := KUBECONFIG=$(KUBE_CONFIG) kubectl
 HELM_CMD     := KUBECONFIG=$(KUBE_CONFIG) helm
 
-all: env-up helm-install helm-test
+all: env-up helm-install
 .PHONY: all
 
 env-up:

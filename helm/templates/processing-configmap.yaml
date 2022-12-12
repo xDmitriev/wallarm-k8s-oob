@@ -21,7 +21,7 @@ data:
   nginx.conf: |-
     worker_processes auto;
 
-    pid /run/nginx.pid;
+    pid /tmp/nginx/nginx.pid;
 
     load_module /etc/nginx/modules/ngx_http_wallarm_module.so;
     load_module /etc/nginx/modules/ngx_http_echo_module.so;
@@ -31,7 +31,6 @@ data:
     }
 
     http {
-        # Basic Settings
         sendfile on;
         tcp_nopush on;
         tcp_nodelay on;
@@ -110,7 +109,7 @@ data:
 
         # Wallarm status endpoint. Required for internal monitoring
         server {
-          listen 127.0.0.8:80;
+          listen 127.0.0.1:10246;
 
           server_name localhost;
 

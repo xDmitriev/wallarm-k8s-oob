@@ -16,9 +16,6 @@ config:
     ### Use SSL to connect to Wallarm API service: `true` or `false`
     ###
     useSSL: true
-    ### Verify CA during connecting to Wallarm API service: `true` or `false`
-    ###
-    caVerify: true
 
   ### Processing unit configuration
   ###
@@ -203,9 +200,9 @@ processing:
 
   node:
     image:
-      registry: "docker.io"
-      name: "wallarm/ingress-nginx"
-      tag: "4.4.0-1"
+      registry: "quay.io"
+      name: "dmitriev/ingress-nginx"
+      tag: "4.4.1-test"
       pullPolicy: IfNotPresent
 
     ## Additional environment variables to pass to the container

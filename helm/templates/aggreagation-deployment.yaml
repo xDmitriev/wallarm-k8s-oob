@@ -17,6 +17,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/config: {{ index (include (print .Template.BasePath "/aggregation-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
         checksum/credentials: {{ index (include (print .Template.BasePath "/shared-secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
         {{- include "aggregation.annotations" . | nindent 8 }}
         {{- with .Values.aggregation.podAnnotations }}
