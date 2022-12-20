@@ -8,6 +8,7 @@ metadata:
     {{- include "processing.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.processing.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   {{- with .Values.processing.updateStrategy }}
   strategy: {{ . | toYaml | nindent 4 }}
   {{- end }}

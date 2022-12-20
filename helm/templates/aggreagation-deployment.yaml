@@ -8,6 +8,7 @@ metadata:
     {{- include "aggregation.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.aggregation.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   {{- with .Values.aggregation.updateStrategy }}
   strategy: {{ . | toYaml | nindent 4 }}
   {{- end }}

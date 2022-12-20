@@ -10,6 +10,10 @@ spec:
   selector:
     matchLabels:
       {{- include "agent.selectorLabels" . | nindent 6 }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- with .Values.agent.updateStrategy }}
+  updateStrategy: {{ . | toYaml | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       annotations:
@@ -51,10 +55,11 @@ spec:
       - name: ebpf-agent
         image: {{ include "image" .Values.agent.image }}
         imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
-        args:
-          - -target-addr
-          - "10.244.0.33:{{ .Values.config.processing.httpPort }}"
-          - "1>&2"
+        #TODO This is a workaround and must be removed when agent will support resolving DNS name
+        command: ["/init.sh"]
+{{/*        args:*/}}
+{{/*          - -target-addr*/}}
+{{/*          - "{{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:80"*/}}
         env:
         {{- with .Values.agent.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
@@ -80,8 +85,10 @@ spec:
         volumeMounts:
         - name: sys-volume
           mountPath: /sys
-{{/*        - name: proc-volume*/}}
-{{/*          mountPath: /proc*/}}
+          #TODO This is a workaround and must be removed when agent will support resolving DNS name
+        - name: init
+          mountPath: /init.sh
+          subPath: init.sh
         {{- with .Values.agent.extraVolumeMounts }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -92,9 +99,11 @@ spec:
       - name: sys-volume
         hostPath:
           path: /sys
-      - name: proc-volume
-        hostPath:
-          path: /proc
+        #TODO This is a workaround and must be removed when agent will support resolving DNS name
+      - name: init
+        configMap:
+          name: {{ template "agent.fullname" . }}
+          defaultMode: 0555
       {{- with .Values.agent.extraVolumes }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}

@@ -58,6 +58,10 @@ config:
 imagePullSecrets: []
 # - name: secretName
 
+# Rollback limit
+## https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit
+revisionHistoryLimit: 10
+
 ## Processing unit deployment configuration
 ##
 processing:
@@ -119,7 +123,8 @@ processing:
   ## Node selector (node labels) for pods
   ## https://kubernetes.io/docs/user-guide/node-selection/
   ##
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/os: linux
 
   ## Lifecycle hooks
   ## https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
@@ -475,7 +480,8 @@ processing:
 
     ## IP address of this Service cluster
     ##
-    clusterIP: ""
+    #TODO Headless service is workaround and must be removed when agent will support resolving DNS name
+    clusterIP: "None"
 
     ## ExternalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic
     ## for this service. These IPs are not managed by Kubernetes.
@@ -502,7 +508,6 @@ processing:
   ##
   podDisruptionBudget:
     enabled: true
-
     ### Select only one of these:
     maxUnavailable: 1
     # minAvailable: 1
@@ -619,7 +624,8 @@ aggregation:
   ## Node selector (node labels) for pods
   ## https://kubernetes.io/docs/user-guide/node-selection/
   ##
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/os: linux
 
   ## Lifecycle hooks
   ## https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
@@ -635,7 +641,6 @@ aggregation:
   ## https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
   ##
   priorityClassName: ""
-
 
   ## Component specific configuration
   ##
@@ -1059,7 +1064,6 @@ aggregation:
   ##
   podDisruptionBudget:
     enabled: true
-
     ### Select only one of these:
     maxUnavailable: 0
     # minAvailable: 1
@@ -1124,6 +1128,15 @@ agent:
     tag: "0.0.1"
     pullPolicy: IfNotPresent
 
+  ## Settings for automated rolling updates
+  ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
+  ##
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0%
+
   ## Labels to add to the pods
   ##
   podLabels: {}
@@ -1168,7 +1181,8 @@ agent:
   ## Node selector (node labels) for pods
   ## https://kubernetes.io/docs/user-guide/node-selection/
   ##
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/os: linux
 
   ## Lifecycle hooks
   ## https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
@@ -1208,7 +1222,17 @@ agent:
 
   ### Readiness probe for the container. Disabled by default
   ###
-  readinessProbe: {}
+  # readinessProbe: {}
+  #TODO This is a workaround and must be removed when agent will support resolving DNS name
+  readinessProbe:
+    exec:
+      command:
+        - test
+        - -f
+        - /tmp/ready
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 4
 
   ## Service Account for this Pod
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -1230,7 +1254,6 @@ agent:
   ##
   podDisruptionBudget:
     enabled: true
-
     ### Select only one of these:
     maxUnavailable: 0
     # minAvailable: 1

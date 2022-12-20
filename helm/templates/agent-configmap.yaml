@@ -1,0 +1,19 @@
+#TODO This is a workaround and must be removed when agent will support resolving DNS name
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "agent.fullname" . }}
+  annotations:
+    {{- include "wallarm-oob.annotations" . | nindent 4 }}
+    {{- with .Values.agent.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "agent.labels" . | nindent 4 }}
+data:
+  init.sh: |
+    #!/bin/sh
+    NODE_IP=$(dig +short {{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.processing.httpPort }})
+    echo "Node IP: ${NODE_IP}"
+    touch /tmp/ready
+    exec /bin/http_dumper -target-addr ${NODE_IP}
