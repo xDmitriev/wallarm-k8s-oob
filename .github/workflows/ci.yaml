@@ -60,7 +60,9 @@ jobs:
         env:
           KIND_CLUSTER_NAME: kind
           WALLARM_API_TOKEN: ${{ secrets.WALLARM_API_TOKEN }}
-        run: make helm-install
+        run: |
+          kind get kubeconfig > $HOME/.kube/kind-config-kind
+          make helm-install
 
       - name: Run smoke tests
         env:
