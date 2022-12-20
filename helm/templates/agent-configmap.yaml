@@ -13,6 +13,7 @@ metadata:
 data:
   init.sh: |
     #!/bin/sh
+    set -x
     NODE_IP=$(dig +short {{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.processing.httpPort }})
     echo "Node IP: ${NODE_IP}"
     touch /tmp/ready
