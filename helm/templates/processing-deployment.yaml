@@ -50,9 +50,6 @@ spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{ . | toYaml | nindent 8 }}
       {{- end }}
-      {{- with .Values.processing.extraInitContainers }}
-      initContainers: {{ . | toYaml | nindent 8 }}
-      {{- end }}
       initContainers:
       - name: init
         image: {{ include "image" .Values.processing.init.image }}
@@ -100,14 +97,14 @@ spec:
         {{- with .Values.processing.init.extraVolumeMounts }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
+      {{- with .Values.processing.extraInitContainers }}
+      {{- . | toYaml | nindent 8 }}
+      {{- end }}
       containers:
       - name: node
         image: {{ include "image" .Values.processing.node.image }}
         imagePullPolicy: {{ .Values.processing.node.image.pullPolicy }}
         env:
-        ### FIX IT !!!
-        - name: POSTANALYTIC_ADDRESS
-          value: {{ printf "%s.%s.svc" (include "aggregation.fullname" .) .Release.Namespace }}
         {{- with .Values.processing.node.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}

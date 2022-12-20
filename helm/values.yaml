@@ -49,14 +49,6 @@ config:
     ###
     tarantoolMemory: 0.5
 
-  ### Agents configuration
-  ###
-  agent:
-    ebpf:
-      enabled: true
-    vxlan:
-      enabled: false
-
 ## Array of private container registry credentials
 ## https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 ##
@@ -1125,21 +1117,166 @@ aggregation:
 
 ## eBPF Agent unit deployment configuration
 ##
-ebpfAgent:
-  ebpf:
-    image:
+agent:
+  image:
+    registry: "docker.io"
+    name: "wallarm/ebpf-agent"
+    tag: "0.0.1"
+    pullPolicy: IfNotPresent
 
-  nginx:
-    image:
+  ## Labels to add to the pods
+  ##
+  podLabels: {}
+  # key: value
 
-## vxlan Agent unit deployment configuration
-##
-vxlanAgent:
-  suricata:
-    image:
+  ## Annotations to add to the pods
+  ##
+  podAnnotations: {}
+  # key: value
 
-  socketProxy:
-    image:
+  ## Setting to allow this Pod to schedule onto nodes with matching taints
+  ## https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  ##
+  tolerations: []
+  # - key: "key"
+  #   operator: "Equal|Exists"
+  #   value: "value"
+  #   effect: "NoSchedule|PreferNoSchedule"
+
+  ## Affinity and anti-affinity settings of this Pod
+  ## https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  ## Prefered podAntiAffinity will be applied if no one affinity configured
+  ##
+  affinity: {}
+  # podAntiAffinity:
+  #   preferredDuringSchedulingIgnoredDuringExecution:
+  #   - weight: 100
+  #     podAffinityTerm:
+  #       labelSelector:
+  #         matchExpressions:
+  #         - key: component
+  #           operator: In
+  #           values:
+  #           - mtls-router
+  #         - key: app
+  #           operator: In
+  #           values:
+  #           - mtls-router
+  #       topologyKey: kubernetes.io/hostname
+
+  ## Node selector (node labels) for pods
+  ## https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Lifecycle hooks
+  ## https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+  ##
+  lifecycle: {}
+
+  ## Grace period for the pods termination in seconds
+  ##
+  terminationGracePeriodSeconds: 30
+
+  ## PriorityClass name to apply to the pods
+  ## This setting indicates the importance of the pod relative to other pods
+  ## https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+  ##
+  priorityClassName: ""
+
+  ## Privileges and access controls for the container
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
+  ##
+  securityContext: {}
+
+  ## The number of resources required for the main container
+  ## https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  ##
+  resources: {}
+  # limits:
+  #   cpu: 250m
+  #   memory: 300Mi
+  # requests:
+  #   cpu: 50m
+  #   memory: 150Mi
+
+  ### Liveness probe for the container. Disabled by default
+  ###
+  livenessProbe: {}
+
+  ### Readiness probe for the container. Disabled by default
+  ###
+  readinessProbe: {}
+
+  ## Service Account for this Pod
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  ##
+  serviceAccount:
+    create: false
+
+    ## Name of the ServiceAccount. If creating not required then
+    ## this name must be a name of existing ServiceAccount object
+    ##
+    name: ""
+
+    ## Annotations for the created Service Account
+    ##
+    annotations: {}
+
+  ## Pod Disruption Budget settings
+  ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  ##
+  podDisruptionBudget:
+    enabled: true
+
+    ### Select only one of these:
+    maxUnavailable: 0
+    # minAvailable: 1
+
+  extraEnvs: []
+  # - name: FOO
+  #   value: FOO
+  # - name: BAR
+  #   valueFrom:
+  #     secretKeyRef:
+  #       key: BAR
+  #       name: bar-secret
+
+  ## Additional init containers
+  ##
+  extraInitContainers: []
+  # - name: init
+  #   image: busybox
+  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
+
+  ## Additional containers for this pods
+  ##
+  extraContainers: [ ]
+  # - name: some-container
+  #   image: some/image:latest
+  #   env:
+  #   - name: FOO
+  #     value: "123"
+  #   volumeMounts:
+  #   - name: bar-volume
+  #     mountPath: /mnt
+
+  ## Additional volumes that should be mounted to the main container
+  ##
+  extraVolumeMounts: []
+  # - name: something
+  #   mountPath: /mnt/something
+
+  ## Volumes that should be attached to pods
+  ##
+  extraVolumes: []
+  # - name: something
+  #   emptyDir: {}
+
+  extraLabels: {}
+  extraAnnotations: {}
 
 extraLabels: {}
 extraAnnotations: {}

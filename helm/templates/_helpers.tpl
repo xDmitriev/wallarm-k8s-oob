@@ -29,6 +29,13 @@ Create the name for Aggregation Unit
 {{- end }}
 
 {{/*
+Create the name for Aggregation Unit
+*/}}
+{{- define "agent.fullname" }}
+{{- printf "%s-agent" (include "wallarm-oob.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
 Create the name for shared secret
 */}}
 {{- define "wallarm-oob.sharedSecretName" }}
@@ -57,6 +64,16 @@ Create the name of the service account for Aggregation Unit
 {{- end -}}
 {{- end -}}
 
+{{/*
+Create the name of the service account for Aggregation Unit
+*/}}
+{{- define "agent.serviceAccountName" -}}
+{{- if .Values.aggregation.serviceAccount.name -}}
+{{- .Values.aggregation.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{ template "agent.fullname" . }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Common labels
@@ -99,6 +116,15 @@ Annotations for Aggregation Unit
 {{- end }}
 {{- end -}}
 
+{{/*
+Annotations for Agent Unit
+*/}}
+{{- define "agent.annotations" -}}
+{{ template "wallarm-oob.annotations" . }}
+{{- if .Values.agent.extraAnnotations }}
+{{ toYaml .Values.agent.extraAnnotations }}
+{{- end }}
+{{- end -}}
 
 {{/*
 Labels for Processing Unit
@@ -122,6 +148,16 @@ Labels for Aggregation Unit
 {{- end }}
 {{- end -}}
 
+{{/*
+Labels for Agent Unit
+*/}}
+{{- define "agent.labels" -}}
+{{ template "wallarm-oob.labels" . }}
+{{ template "agent.selectorLabels" . }}
+{{- if .Values.agent.extraLabels }}
+{{ toYaml .Values.agent.extraLabels }}
+{{- end }}
+{{- end -}}
 
 {{/*
 Selector labels for Processing Unit
@@ -139,6 +175,15 @@ Selector labels for Aggregation Unit
 app.kubernetes.io/name: {{ include "wallarm-oob.name" . | quote }}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/component: "aggregation"
+{{- end -}}
+
+{{/*
+Selector labels for Aggregation Unit
+*/}}
+{{- define "agent.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "wallarm-oob.name" . | quote }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
+app.kubernetes.io/component: "agent"
 {{- end -}}
 
 {{/*
@@ -213,4 +258,18 @@ capabilities:
     - ALL
   add:
     - NET_BIND_SERVICE
+{{- end }}
+
+{{/*
+Agent SecurityContext
+*/}}
+{{- define "wallarm-oob.agentSecurityContext" -}}
+privileged: true
+runAsUser: 0
+capabilities:
+  add:
+    - SYS_ADMIN
+    - NET_ADMIN
+    - SYS_PTRACE
+    - all
 {{- end }}

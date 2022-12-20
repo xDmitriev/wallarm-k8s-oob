@@ -1,23 +1,25 @@
 # https://makefiletutorial.com/
 
 -include .env
+.EXPORT_ALL_VARIABLES:
 
 DIR = $(shell cd "$$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-KUBE_CLUSTER ?= oob-dev
-KUBE_VERSION ?= "v1.25.2"
-KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KUBE_CLUSTER}"
+KIND_CLUSTER_NAME ?= wallarm-oob
+KIND_CLUSTER_VERSION ?= "v1.25.2"
+#KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KIND_CLUSTER_NAME}"
+KUBE_CONFIG  ?="${HOME}/.lima/default/conf/kubeconfig.yaml"
 
 KUBECTL_CMD  := KUBECONFIG=$(KUBE_CONFIG) kubectl
 HELM_CMD     := KUBECONFIG=$(KUBE_CONFIG) helm
 
-all: env-up helm-install
+all: env-up helm-install smoke-test
 .PHONY: all
 
 env-up:
 	kind create cluster \
-			--name ${KUBE_CLUSTER} \
-			--image "kindest/node:${KUBE_VERSION}" \
+			--name ${KIND_CLUSTER_NAME} \
+			--image "kindest/node:${KIND_CLUSTER_VERSION}" \
 			--kubeconfig ${KUBE_CONFIG} \
 			--retain
 	$(KUBECTL_CMD) apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
@@ -26,7 +28,7 @@ env-up:
 	$(KUBECTL_CMD) get nodes -o wide
 
 env-down:
-	@kind delete cluster --name ${KUBE_CLUSTER}
+	@kind delete cluster --name ${KIND_CLUSTER_NAME}
 
 .PHONY: env-*
 
@@ -36,19 +38,21 @@ HELM_EXTRA_ARGS +=
 HELM_TEST_IMAGE += "quay.io/dmitriev/chart-testing:latest-amd64"
 HELM_ARGS := --set "config.api.token=${WALLARM_API_TOKEN}" \
 			 --set "config.api.host=${WALLARM_API_HOST}" \
-			 --set "config.api.caVerify=${WALLARM_API_CA_VERIFY:-True}" \
+			 --set "agent.image.fullname=${AGENT_IMAGE}" \
+			 --set "agent.image.pullPolicy=Never" \
+			 --set="agent.terminationGracePeriodSeconds=0" \
+			 --set "aggregation.image.pullPolicy=Never" \
+			 --set="aggregation.terminationGracePeriodSeconds=0" \
+			 --set "processing.image.pullPolicy=Never" \
+			 --set="processing.terminationGracePeriodSeconds=0" \
 			 $(HELM_EXTRA_ARGS)
-
-#ifdef WALLARM_NODE_IMAGE
-#HELM_ARGS += --set "aggregation.image.fullname=$(WALLARM_NODE_IMAGE)" \
-#			 --set "processing.image.fullname=$(WALLARM_NODE_IMAGE)"
-#endif
 
 helm-template:
 	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
 
 helm-install:
-	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --debug
+	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --debug --wait
+	$(KUBECTL_CMD) wait --for=condition=Ready pods --all --timeout=90s
 
 helm-uninstall:
 	$(HELM_CMD) uninstall wallarm-oob
@@ -70,3 +74,8 @@ helm-test:
             --debug
 
 .PHONY: helm-*
+
+smoke-test:  ## Run smoke tests (expects access to a working Kubernetes cluster).
+	@test/smoke/run-smoke-suite.sh
+
+.PHONY: smoke-test
