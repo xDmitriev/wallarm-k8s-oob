@@ -103,6 +103,5 @@ jobs:
           WALLARM_API_TOKEN: ${{ secrets.WALLARM_API_TOKEN }}
         run: |
           kind get kubeconfig > $HOME/.kube/kind-config-kind
-          export KUBE_CONFIG=$HOME/.kube/kind-config-kind
           make helm-test
 

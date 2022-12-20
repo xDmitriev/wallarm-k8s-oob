@@ -41,7 +41,7 @@ helm-template:
 	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
 
 helm-install:
-	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --debug --wait
+	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --wait
 	$(KUBECTL_CMD) wait --for=condition=Ready pods --all --timeout=90s
 
 helm-uninstall:

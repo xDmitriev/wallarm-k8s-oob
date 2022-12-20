@@ -271,5 +271,4 @@ capabilities:
     - SYS_ADMIN
     - NET_ADMIN
     - SYS_PTRACE
-    - all
 {{- end }}
