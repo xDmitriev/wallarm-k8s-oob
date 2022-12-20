@@ -831,7 +831,7 @@ aggregation:
       tcpSocket:
         port: tarantool
       initialDelaySeconds: 10
-      periodSeconds: 15ß
+      periodSeconds: 15
       timeoutSeconds: 3
       failureThreshold: 3
       successThreshold: 1
