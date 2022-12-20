@@ -104,4 +104,6 @@ jobs:
         run: |
           kind get kubeconfig > $HOME/.kube/kind-config-kind
           make helm-test
+          KUBECONFIG=$HOME/.kube/kind-config-kind kubectl get svc
+          KUBECONFIG=$HOME/.kube/kind-config-kind kubectl get pods
 
