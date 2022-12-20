@@ -7,8 +7,7 @@ DIR = $(shell cd "$$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 KIND_CLUSTER_NAME ?= wallarm-oob
 KIND_CLUSTER_VERSION ?= "v1.25.2"
-#KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KIND_CLUSTER_NAME}"
-KUBE_CONFIG  ?="${HOME}/.lima/default/conf/kubeconfig.yaml"
+KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KIND_CLUSTER_NAME}"
 
 KUBECTL_CMD  := KUBECONFIG=$(KUBE_CONFIG) kubectl
 HELM_CMD     := KUBECONFIG=$(KUBE_CONFIG) helm
@@ -36,16 +35,7 @@ env-down:
 ###
 HELM_EXTRA_ARGS +=
 HELM_TEST_IMAGE += "quay.io/dmitriev/chart-testing:latest-amd64"
-HELM_ARGS := --set "config.api.token=${WALLARM_API_TOKEN}" \
-			 --set "config.api.host=${WALLARM_API_HOST}" \
-			 --set "agent.image.fullname=${AGENT_IMAGE}" \
-			 --set "agent.image.pullPolicy=Never" \
-			 --set="agent.terminationGracePeriodSeconds=0" \
-			 --set "aggregation.image.pullPolicy=Never" \
-			 --set="aggregation.terminationGracePeriodSeconds=0" \
-			 --set "processing.image.pullPolicy=Never" \
-			 --set="processing.terminationGracePeriodSeconds=0" \
-			 $(HELM_EXTRA_ARGS)
+HELM_ARGS := --set "config.api.token=${WALLARM_API_TOKEN}" $(HELM_EXTRA_ARGS)
 
 helm-template:
 	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
