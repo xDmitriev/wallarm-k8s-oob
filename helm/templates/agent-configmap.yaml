@@ -14,7 +14,9 @@ data:
   init.sh: |
     #!/bin/sh
     set -x
-    NODE_IP=$(dig +short {{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.config.processing.httpPort }})
+    NODE_IP=$(dig +short {{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc)
+    NODE_PORT={{ .Values.config.processing.httpPort }}
     echo "Node IP: ${NODE_IP}"
+    echo "Node Port: ${NODE_PORT}"
     touch /tmp/ready
-    exec /bin/http_dumper -target-addr ${NODE_IP}
+    exec /bin/http_dumper -target-addr ${NODE_IP}:${NODE_PORT}
