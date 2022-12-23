@@ -55,11 +55,9 @@ spec:
       - name: ebpf-agent
         image: {{ include "image" .Values.agent.image }}
         imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
-        #TODO This is a workaround and must be removed when agent will support resolving DNS name
-        command: ["/init.sh"]
-{{/*        args:*/}}
-{{/*          - -target-addr*/}}
-{{/*          - "{{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:80"*/}}
+        args:
+          - -target-addr
+          - "{{ template "processing.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.processing.service.port }}"
         env:
         {{- with .Values.agent.extraEnvs }}
         {{- . | toYaml | nindent 8 }}
@@ -83,12 +81,10 @@ spec:
         resources: {{ . | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
-        - name: sys-volume
+        - name: sys
           mountPath: /sys
-          #TODO This is a workaround and must be removed when agent will support resolving DNS name
-        - name: init
-          mountPath: /init.sh
-          subPath: init.sh
+        - name: proc
+          mountPath: /hostproc
         {{- with .Values.agent.extraVolumeMounts }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -96,14 +92,12 @@ spec:
       {{- . | toYaml | nindent 6 }}
       {{- end }}
       volumes:
-      - name: sys-volume
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
         hostPath:
           path: /sys
-        #TODO This is a workaround and must be removed when agent will support resolving DNS name
-      - name: init
-        configMap:
-          name: {{ template "agent.fullname" . }}
-          defaultMode: 0555
       {{- with .Values.agent.extraVolumes }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}

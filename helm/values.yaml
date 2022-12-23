@@ -446,7 +446,8 @@ processing:
     ## https://kubernetes.io/docs/concepts/services-networking/service/
     ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#service-v1-core
     ##
-    type: ClusterIP
+    #type: ClusterIP
+    type: NodePort
 
     ## Service port
     ##
@@ -454,7 +455,8 @@ processing:
 
     ## Service node port (if the service type if "NodePort")
     ##
-    nodePort: 0
+    #nodePort: 0
+    nodePort: 30000
 
     ## Load balancer IP address
     ## https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
@@ -1124,7 +1126,7 @@ agent:
   image:
     registry: "docker.io"
     name: "wallarm/ebpf-agent"
-    tag: "0.0.1"
+    tag: "0.0.2"
     pullPolicy: IfNotPresent
 
   ## Settings for automated rolling updates
@@ -1221,17 +1223,7 @@ agent:
 
   ### Readiness probe for the container. Disabled by default
   ###
-  # readinessProbe: {}
-  #TODO This is a workaround and must be removed when agent will support resolving DNS name
-  readinessProbe:
-    exec:
-      command:
-        - test
-        - -f
-        - /tmp/ready
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    failureThreshold: 4
+  readinessProbe: {}
 
   ## Service Account for this Pod
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
