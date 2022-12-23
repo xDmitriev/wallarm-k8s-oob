@@ -99,11 +99,12 @@ jobs:
 
       - name: Run chart tests
         env:
-          KIND_CLUSTER_NAME: kind
           WALLARM_API_TOKEN: ${{ secrets.WALLARM_API_TOKEN }}
+          KIND_CLUSTER_NAME: kind
+          KUBECONFIG: $HOME/kube/kind-config-kind
         run: |
-          kind get kubeconfig > $HOME/.kube/kind-config-kind
+          kind get kubeconfig > ${KUBECONFIG}
           make helm-test
-          KUBECONFIG=$HOME/.kube/kind-config-kind kubectl get svc
-          KUBECONFIG=$HOME/.kube/kind-config-kind kubectl get pods
+          kubectl get svc
+          kubectl get pods
 

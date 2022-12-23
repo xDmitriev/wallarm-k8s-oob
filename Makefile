@@ -43,7 +43,7 @@ helm-template:
 	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
 
 helm-install:
-	$(HELM_CMD) upgrade --install wallarm-oob ./helm $(HELM_ARGS) --wait
+	$(HELM_CMD) upgrade --install oob-ebpf ./helm $(HELM_ARGS) --wait
 	$(KUBECTL_CMD) wait --for=condition=Ready pods --all --timeout=90s
 
 helm-uninstall:
@@ -55,7 +55,7 @@ helm-test:
         --interactive \
         --network host \
         --name chart-testing \
-        --volume ${KUBE_CONFIG}:/root/.kube/config \
+        --volume ${KUBECONFIG}:/root/.kube/config \
         --volume ${DIR}:/workdir \
         --workdir /workdir \
         ${HELM_TEST_IMAGE} ct install \
