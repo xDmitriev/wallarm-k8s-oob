@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  KUBECONFIG: /home/runner/kube/kind-config-kind
+  KUBECONFIG: /home/runner/.kube/config
 
 permissions:
   contents: read
@@ -47,20 +47,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.0.2
 
-      - name: Install helm
-        uses: azure/setup-helm@f382f75448129b3be48f8121b9857be18d815a82
-        with:
-          version: 'v3.8.0'
-
       - name: Create cluster
-        uses: helm/kind-action@9e8295d178de23cbfbd8fa16cf844eec1d773a07
-        with:
-          version: v0.17.0
-          cluster_name: kind
-          node_image: kindest/node:${{ matrix.k8s }}
-
-      - name: Get cluster config
-        run: kind get kubeconfig > ${KUBECONFIG}
+        run: kind create cluster --kubeconfig ${KUBECONFIG} --image kindest/node:${{ matrix.k8s }}
 
       - name: Install chart
         env:
@@ -87,20 +75,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.0.2
 
-      - name: Install helm
-        uses: azure/setup-helm@f382f75448129b3be48f8121b9857be18d815a82
-        with:
-          version: 'v3.8.0'
-
       - name: Create cluster
-        uses: helm/kind-action@9e8295d178de23cbfbd8fa16cf844eec1d773a07
-        with:
-          version: v0.17.0
-          cluster_name: kind
-          node_image: kindest/node:v1.24.7
-
-      - name: Get cluster config
-        run: kind get kubeconfig > ${KUBECONFIG}
+        run: kind create cluster --kubeconfig ${KUBECONFIG} --image kindest/node:v1.24.7
 
       - name: Run chart tests
         env:
