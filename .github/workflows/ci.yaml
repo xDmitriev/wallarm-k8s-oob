@@ -6,6 +6,9 @@ on:
     types: ['opened', 'reopened', 'synchronize']
   workflow_dispatch:
 
+env:
+  KUBECONFIG: /home/runner/kube/kind-config-kind
+
 permissions:
   contents: read
 
@@ -37,8 +40,6 @@ jobs:
     needs:
       - changes
     if: needs.changes.outputs.helm == 'true'
-    env:
-      KUBECONFIG: ${{ env.HOME }}/kube/kind-config-kind
     strategy:
       matrix:
         k8s: [v1.23.13, v1.24.7, v1.25.3]
@@ -82,8 +83,6 @@ jobs:
     needs:
       - changes
     if: needs.changes.outputs.helm == 'true'
-    env:
-      KUBECONFIG: ${{ env.HOME }}/kube/kind-config-kind
     steps:
       - name: Checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.0.2
