@@ -6,28 +6,30 @@
 DIR = $(shell cd "$$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 KIND_CLUSTER_NAME ?= wallarm-oob
-KIND_CLUSTER_VERSION ?= "v1.25.2"
-KUBE_CONFIG  ?= "${HOME}/.kube/kind-config-${KIND_CLUSTER_NAME}"
+KUBECONFIG  ?= "${HOME}/.lima/k8s/conf/kubeconfig.yaml"
 
-KUBECTL_CMD  := KUBECONFIG=$(KUBE_CONFIG) kubectl
-HELM_CMD     := KUBECONFIG=$(KUBE_CONFIG) helm
+KUBECTL_CMD  := KUBECONFIG=$(KUBECONFIG) kubectl
+HELM_CMD     := KUBECONFIG=$(KUBECONFIG) helm
 
 all: env-up helm-install smoke-test
 .PHONY: all
 
 env-up:
-	kind create cluster \
-			--name ${KIND_CLUSTER_NAME} \
-			--image "kindest/node:${KIND_CLUSTER_VERSION}" \
-			--kubeconfig ${KUBE_CONFIG} \
-			--retain
-	$(KUBECTL_CMD) apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
-	$(KUBECTL_CMD) patch -n kube-system deployment metrics-server --type=json \
-       -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-	$(KUBECTL_CMD) get nodes -o wide
+	@limactl start --name k8s --tty=false template://k8s
+	@limactl shell k8s sudo cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
+	$(KUECTL_CMD) get nodes
+
+env-kubeconfig:
+	@limactl shell k8s sudo cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
+
+env-stop:
+	@limactl stop k8s
+
+env-start:
+	@limactl start k8s
 
 env-down:
-	@kind delete cluster --name ${KIND_CLUSTER_NAME}
+	@limactl delete k8s
 
 .PHONY: env-*
 
