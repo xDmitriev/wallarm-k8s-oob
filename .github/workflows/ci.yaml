@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  KUBECONFIG: $HOME/kube/kind-config-kind
+  KUBECONFIG: ${{ env.HOME }}/kube/kind-config-kind
 
 jobs:
   changes:
