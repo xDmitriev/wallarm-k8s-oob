@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  KUBECONFIG: $HOME/kube/kind-config-kind
+
 jobs:
   changes:
     name: Changes
@@ -52,21 +55,20 @@ jobs:
       - name: Create cluster
         uses: helm/kind-action@9e8295d178de23cbfbd8fa16cf844eec1d773a07
         with:
-          version: v0.15.0
+          version: v0.17.0
           cluster_name: kind
           node_image: kindest/node:${{ matrix.k8s }}
 
+      - name: Get cluster config
+        run: kind get kubeconfig > ${KUBECONFIG}
+
       - name: Install chart
         env:
-          KIND_CLUSTER_NAME: kind
           WALLARM_API_TOKEN: ${{ secrets.WALLARM_API_TOKEN }}
-        run: |
-          kind get kubeconfig > $HOME/.kube/kind-config-kind
-          make helm-install
+        run: make helm-install
 
       - name: Run smoke tests
         env:
-          ARCH: amd64
           KIND_CLUSTER_NAME: kind
           USER_UUID: ${{ secrets.WALLARM_API_USER_UUID }}
           USER_SECRET: ${{ secrets.WALLARM_API_USER_SECRET }}
@@ -93,18 +95,16 @@ jobs:
       - name: Create cluster
         uses: helm/kind-action@9e8295d178de23cbfbd8fa16cf844eec1d773a07
         with:
-          version: v0.15.0
+          version: v0.17.0
           cluster_name: kind
-          node_image: kindest/node:v1.24.4
+          node_image: kindest/node:v1.24.7
+
+      - name: Get cluster config
+        run: kind get kubeconfig > ${KUBECONFIG}
 
       - name: Run chart tests
         env:
           WALLARM_API_TOKEN: ${{ secrets.WALLARM_API_TOKEN }}
-          KIND_CLUSTER_NAME: kind
-          KUBECONFIG: $HOME/kube/kind-config-kind
-        run: |
-          kind get kubeconfig > ${KUBECONFIG}
-          make helm-test
-          kubectl get svc
-          kubectl get pods
+        run: make helm-test
+
 
