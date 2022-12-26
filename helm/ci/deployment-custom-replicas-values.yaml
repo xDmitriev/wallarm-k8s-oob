@@ -1,4 +1,4 @@
 processing:
-  replicaCount: 3
+  replicaCount: 2
 aggregation:
   replicaCount: 2
