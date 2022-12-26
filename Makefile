@@ -20,7 +20,7 @@ all: env-init helm-install smoke-test
 ### Local dev env routines
 ###
 env-init:
-	CURDIR=$(CURDIR) envsubst < "lima/k8s.yaml" > "lima/k8s.yaml.rendered"
+	CURDIR=$(CURDIR) envsubst '$${CURDIR}' < "lima/k8s.yaml" > "lima/k8s.yaml.rendered"
 	limactl start --name $(VM_NAME) --tty=false $$(pwd)/lima/k8s.yaml.rendered
 	make env-get-config
 	$(KUBECTL_CMD) get nodes
@@ -79,7 +79,7 @@ helm-test:
         ${HELM_TEST_IMAGE} ct install \
             --charts helm \
             --helm-extra-set-args "${HELM_ARGS}" \
-            --helm-extra-args "--timeout 150s --wait" \
+            --helm-extra-args "--timeout 90s" \
             ${CT_EXTRA_ARGS:-} \
             --debug
 
