@@ -5,31 +5,49 @@
 
 DIR = $(shell cd "$$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-KIND_CLUSTER_NAME ?= wallarm-oob
-KUBECONFIG  ?= "${HOME}/.lima/k8s/conf/kubeconfig.yaml"
+VM_NAME    ?= k8s
+CONFIG_DIR ?= ${HOME}/.lima/$(VM_NAME)/conf
+KUBECONFIG ?= $(CONFIG_DIR)/kubeconfig.yaml
 
-KUBECTL_CMD  := KUBECONFIG=$(KUBECONFIG) kubectl
-HELM_CMD     := KUBECONFIG=$(KUBECONFIG) helm
+KUBECTL_CMD := KUBECONFIG=$(KUBECONFIG) kubectl
+HELM_CMD    := KUBECONFIG=$(KUBECONFIG) helm
+SHELL_CMD   := limactl shell $(VM_NAME) sudo
+DOCKER_CMD  := $(SHELL_CMD) nerdctl -n k8s.io
 
-all: env-up helm-install smoke-test
+all: env-init helm-install smoke-test
 .PHONY: all
 
-env-up:
-	@limactl start --name k8s --tty=false template://k8s
-	@limactl shell k8s sudo cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
-	$(KUECTL_CMD) get nodes
+### Local dev env routines
+###
+env-init:
+	CURDIR=$(CURDIR) envsubst < "lima/k8s.yaml" > "lima/k8s.yaml.rendered"
+	limactl start --name $(VM_NAME) --tty=false $$(pwd)/lima/k8s.yaml.rendered
+	make env-get-config
+	$(KUBECTL_CMD) get nodes
 
-env-kubeconfig:
-	@limactl shell k8s sudo cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
+env-get-config:
+	@mkdir $(CONFIG_DIR) || true
+	$(SHELL_CMD) cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
+	@echo "Execute: export KUBECONFIG=$(KUBECONFIG)"
 
 env-stop:
-	@limactl stop k8s
+	@limactl stop $(VM_NAME) || limactl stop -f $(VM_NAME)
 
 env-start:
-	@limactl start k8s
+	@limactl start $(VM_NAME)
+	make env-kubeconfig
 
-env-down:
-	@limactl delete k8s
+env-down: env-stop
+	@limactl delete $(VM_NAME)
+
+env-status:
+	@limactl list $(VM_NAME)
+
+env-shell:
+	$(SHELL_CMD) -i
+
+env-k9s:
+	@KUBECONFIG=$(KUBECONFIG) k9s
 
 .PHONY: env-*
 
@@ -37,7 +55,7 @@ env-down:
 ###
 HELM_EXTRA_ARGS +=
 HELM_TEST_IMAGE += "quay.io/dmitriev/chart-testing:latest-amd64"
-HELM_ARGS := --set "config.api.token=${WALLARM_API_TOKEN}" $(HELM_EXTRA_ARGS)
+HELM_ARGS := --set config.api.token=${WALLARM_API_TOKEN} $(HELM_EXTRA_ARGS)
 
 helm-template:
 	$(HELM_CMD) template wallarm-oob ./helm $(HELM_ARGS) --debug
@@ -47,27 +65,28 @@ helm-install:
 	$(KUBECTL_CMD) wait --for=condition=Ready pods --all --timeout=90s
 
 helm-uninstall:
-	$(HELM_CMD) uninstall wallarm-oob
+	$(HELM_CMD) uninstall oob-ebpf
 
 helm-test:
-	@docker run \
+	$(DOCKER_CMD) run \
         --rm \
         --interactive \
         --network host \
         --name chart-testing \
-        --volume ${KUBECONFIG}:/root/.kube/config \
-        --volume ${DIR}:/workdir \
+        --volume /etc/kubernetes/admin.conf:/root/.kube/config \
+        --volume /project:/workdir \
         --workdir /workdir \
         ${HELM_TEST_IMAGE} ct install \
             --charts helm \
             --helm-extra-set-args "${HELM_ARGS}" \
-            --helm-extra-args "--timeout 90s" \
+            --helm-extra-args "--timeout 150s --wait" \
             ${CT_EXTRA_ARGS:-} \
             --debug
 
 .PHONY: helm-*
 
-smoke-test:  ## Run smoke tests (expects access to a working Kubernetes cluster).
+## Run smoke tests (expects access to a working Kubernetes cluster).
+smoke-test:
 	@test/smoke/run-smoke-suite.sh
 
 .PHONY: smoke-test

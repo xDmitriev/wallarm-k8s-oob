@@ -446,8 +446,7 @@ processing:
     ## https://kubernetes.io/docs/concepts/services-networking/service/
     ## https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#service-v1-core
     ##
-    #type: ClusterIP
-    type: NodePort
+    type: ClusterIP
 
     ## Service port
     ##
@@ -455,8 +454,7 @@ processing:
 
     ## Service node port (if the service type if "NodePort")
     ##
-    #nodePort: 0
-    nodePort: 30000
+    nodePort: 0
 
     ## Load balancer IP address
     ## https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
@@ -1126,7 +1124,7 @@ agent:
   image:
     registry: "docker.io"
     name: "wallarm/ebpf-agent"
-    tag: "0.0.2"
+    tag: "0.0.3"
     pullPolicy: IfNotPresent
 
   ## Settings for automated rolling updates

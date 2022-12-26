@@ -14,7 +14,7 @@ spec:
     name: {{ template "aggregation.fullname" . }}
   minReplicas: {{ .Values.aggregation.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.aggregation.autoscaling.maxReplicas }}
-  {{ if .Capabilities.APIVersions.Has "autoscaling/v2beta2/HorizontalPodAutoscaler" -}}
+  {{ if or (.Capabilities.APIVersions.Has "autoscaling/v2beta2/HorizontalPodAutoscaler") (.Capabilities.APIVersions.Has "autoscaling/v2/HorizontalPodAutoscaler") -}}
   metrics:
   - type: Resource
     resource:

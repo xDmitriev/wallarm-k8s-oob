@@ -14,7 +14,7 @@ spec:
     name: {{ template "processing.fullname" . }}-processing
   minReplicas: {{ .Values.processing.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.processing.autoscaling.maxReplicas }}
-  {{ if or (.Capabilities.APIVersions.Has "autoscaling/v2beta2") (.Capabilities.APIVersions.Has "autoscaling/v2beta") -}}
+  {{ if or (.Capabilities.APIVersions.Has "autoscaling/v2beta2/HorizontalPodAutoscaler") (.Capabilities.APIVersions.Has "autoscaling/v2/HorizontalPodAutoscaler") -}}
   metrics:
   - type: Resource
     resource:
