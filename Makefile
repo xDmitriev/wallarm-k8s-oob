@@ -26,7 +26,7 @@ env-init:
 	$(KUBECTL_CMD) get nodes
 
 env-get-config:
-	@mkdir $(CONFIG_DIR) || true
+	@[ -d $(CONFIG_DIR) ] || mkdir mkdir $(CONFIG_DIR)
 	$(SHELL_CMD) cat /etc/kubernetes/admin.conf > $(KUBECONFIG)
 	@echo "Execute: export KUBECONFIG=$(KUBECONFIG)"
 
@@ -35,7 +35,7 @@ env-stop:
 
 env-start:
 	@limactl start $(VM_NAME)
-	make env-kubeconfig
+	make env-get-config
 
 env-down: env-stop
 	@limactl delete $(VM_NAME)
@@ -47,7 +47,7 @@ env-shell:
 	$(SHELL_CMD) -i
 
 env-k9s:
-	@KUBECONFIG=$(KUBECONFIG) k9s
+	KUBECONFIG=$(KUBECONFIG) k9s
 
 .PHONY: env-*
 
@@ -68,25 +68,12 @@ helm-uninstall:
 	$(HELM_CMD) uninstall oob-ebpf
 
 helm-test:
-	$(DOCKER_CMD) run \
-        --rm \
-        --interactive \
-        --network host \
-        --name chart-testing \
-        --volume /etc/kubernetes/admin.conf:/root/.kube/config \
-        --volume /project:/workdir \
-        --workdir /workdir \
-        ${HELM_TEST_IMAGE} ct install \
-            --charts helm \
-            --helm-extra-set-args "${HELM_ARGS}" \
-            --helm-extra-args "--timeout 90s" \
-            ${CT_EXTRA_ARGS:-} \
-            --debug
+	@test/run-chart-testing.sh
 
 .PHONY: helm-*
 
 ## Run smoke tests (expects access to a working Kubernetes cluster).
 smoke-test:
-	@test/smoke/run-smoke-suite.sh
+	@test/run-smoke-suite.sh
 
 .PHONY: smoke-test

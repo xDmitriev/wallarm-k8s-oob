@@ -269,6 +269,5 @@ runAsUser: 0
 capabilities:
   add:
     - SYS_ADMIN
-    - NET_ADMIN
     - SYS_PTRACE
 {{- end }}

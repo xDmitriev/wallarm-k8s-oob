@@ -51,6 +51,8 @@ spec:
       {{- with .Values.agent.extraInitContainers }}
       initContainers: {{ . | toYaml | nindent 8 }}
       {{- end }}
+      #TODO Probably not needed for production release
+      hostPID: true
       containers:
       - name: ebpf-agent
         image: {{ include "image" .Values.agent.image }}
